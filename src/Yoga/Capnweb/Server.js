@@ -1,18 +1,22 @@
 import { RpcTarget as RpcTargetClass, newWebSocketRpcSession } from "capnweb";
 
-export const mkRpcTargetImpl = (record) => () => {
-  const target = new RpcTargetClass();
+function makeTarget(record) {
+  const proto = Object.create(RpcTargetClass.prototype);
   for (const [key, val] of Object.entries(record)) {
-    target[key] = val;
+    proto[key] = val;
   }
-  return target;
+  function Target() { RpcTargetClass.call(this); }
+  Target.prototype = proto;
+  Target.prototype.constructor = Target;
+  return new Target();
+}
+
+export const mkRpcTargetImpl = (record) => () => {
+  return makeTarget(record);
 };
 
 export const mkDisposableRpcTargetImpl = (record, onDispose) => () => {
-  const target = new RpcTargetClass();
-  for (const [key, val] of Object.entries(record)) {
-    target[key] = val;
-  }
+  const target = makeTarget(record);
   target[Symbol.dispose] = () => onDispose();
   return target;
 };
