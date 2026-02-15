@@ -59,8 +59,10 @@ export const call0Impl = (conn, method) => toPromise(conn.stub[method]());
 export const call1Impl = (conn, method, a) => toPromise(conn.stub[method](a));
 export const call2Impl = (conn, method, a, b) => toPromise(conn.stub[method](a, b));
 
-export const callWithCallbackImpl = (conn, method, callback) =>
-  toPromise(conn.stub[method](callback));
+export const callWithCallbackImpl = (conn, method, callback) => {
+  const wrappedCb = (value) => callback(value)();
+  return toPromise(conn.stub[method](wrappedCb));
+};
 
 export const getStatsImpl = (conn) => () => conn.session.getStats();
 
