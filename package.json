@@ -1,0 +1,13 @@
+{
+  "name": "purescript-yoga-capnweb",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "spago build",
+    "test": "spago test"
+  },
+  "dependencies": {
+    "capnweb": "*",
+    "ws": "*"
+  }
+}

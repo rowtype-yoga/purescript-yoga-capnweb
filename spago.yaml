@@ -1,0 +1,27 @@
+workspace:
+  packageSet:
+    registry: 73.0.0
+  extraPackages:
+    yoga-react-om:
+      path: ../purescript-yoga-react-om
+    yoga-om:
+      path: ../purescript-yoga-om
+    yoga-react:
+      path: ../purescript-yoga-react
+
+package:
+  name: yoga-capnweb
+  dependencies:
+    - aff: ">=4.0.0 <5.0.0"
+    - aff-promise: ">=4.0.0 <5.0.0"
+    - effect: ">=4.0.0 <5.0.0"
+    - foreign: ">=7.0.0 <8.0.0"
+    - functions: ">=6.0.0 <7.0.0"
+    - prelude: ">=6.0.1 <7.0.0"
+    - unsafe-coerce: ">=6.0.0 <7.0.0"
+  publish:
+    version: 0.1.0
+    license: MIT
+    location:
+      githubOwner: rowtype-yoga
+      githubRepo: purescript-yoga-capnweb
