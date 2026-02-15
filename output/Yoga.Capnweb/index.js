@@ -12,6 +12,7 @@ var liftEffect = /* #__PURE__ */ Effect_Class.liftEffect(Effect_Aff.monadEffectA
 var bind = /* #__PURE__ */ Control_Bind.bind(Effect_Aff.bindAff);
 var pure = /* #__PURE__ */ Control_Applicative.pure(Effect_Aff.applicativeAff);
 var map = /* #__PURE__ */ Data_Functor.map(Effect_Aff.functorAff);
+var getStats = $foreign.getStatsImpl;
 var dup = $foreign.dupImpl;
 var disposeStub = $foreign.disposeStubImpl;
 var dispose = $foreign.disposeImpl;
@@ -68,6 +69,7 @@ export {
     call0,
     call1,
     call2,
-    callWithCallback
+    callWithCallback,
+    getStats
 };
 //# sourceMappingURL=index.js.map

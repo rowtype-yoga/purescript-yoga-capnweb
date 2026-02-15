@@ -11,6 +11,8 @@ module Yoga.Capnweb
   , call1
   , call2
   , callWithCallback
+  , SessionStats
+  , getStats
   ) where
 
 import Prelude
@@ -87,3 +89,12 @@ callWithCallback session method callback = do
   let jsCb = unsafeCoerce callback
   _ <- runFn3 callWithCallbackImpl session method jsCb # toAff
   pure unit
+
+-- Diagnostics
+
+type SessionStats = { imports :: Int, exports :: Int }
+
+foreign import getStatsImpl :: RpcSession -> Effect SessionStats
+
+getStats :: RpcSession -> Effect SessionStats
+getStats = getStatsImpl

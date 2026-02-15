@@ -26,3 +26,5 @@ export const call2Impl = (session, method, a, b) => toPromise(session[method](a,
 
 export const callWithCallbackImpl = (session, method, callback) =>
   toPromise(session[method](callback));
+
+export const getStatsImpl = (session) => () => session.getStats();
