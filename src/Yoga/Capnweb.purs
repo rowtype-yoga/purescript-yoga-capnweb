@@ -1,6 +1,7 @@
 module Yoga.Capnweb
   ( RpcConnection
   , RpcStub
+  , Subscription
   , connect
   , connectPair
   , dispose
@@ -12,6 +13,7 @@ module Yoga.Capnweb
   , call1
   , call2
   , callWithCallback
+  , subscribe
   , SessionStats
   , getStats
   , drain
@@ -22,9 +24,13 @@ import Prelude
 import Control.Promise (Promise, toAff)
 import Data.Function.Uncurried (Fn2, Fn3, Fn4, runFn2, runFn3, runFn4)
 import Effect (Effect)
-import Effect.Aff (Aff, bracket)
+import Effect.Aff (Aff, bracket, killFiber)
+import Effect.Aff as Aff
 import Effect.Class (liftEffect)
+import Effect.Exception (error)
 import Foreign (Foreign)
+import FRP.Event (Event)
+import FRP.Event as Event
 import Unsafe.Coerce (unsafeCoerce)
 import Yoga.Capnweb.Server (RpcTarget)
 
@@ -97,6 +103,17 @@ callWithCallback conn method callback = do
   let jsCb = unsafeCoerce callback
   _ <- runFn3 callWithCallbackImpl conn method jsCb # toAff
   pure unit
+
+-- Subscriptions (push-based via Event)
+
+type Subscription a = { event :: Event a, unsubscribe :: Effect Unit }
+
+subscribe :: forall a. String -> RpcConnection -> Effect (Subscription a)
+subscribe method conn = do
+  { event, push } <- Event.create
+  let cb = push <<< unsafeCoerce
+  fiber <- Aff.launchAff $ callWithCallback conn method cb
+  pure { event, unsubscribe: Aff.launchAff_ $ killFiber (error "unsubscribed") fiber }
 
 -- Diagnostics
 

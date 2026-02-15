@@ -7,6 +7,8 @@ import * as Data_Functor from "../Data.Functor/index.js";
 import * as Data_Unit from "../Data.Unit/index.js";
 import * as Effect_Aff from "../Effect.Aff/index.js";
 import * as Effect_Class from "../Effect.Class/index.js";
+import * as Effect_Exception from "../Effect.Exception/index.js";
+import * as FRP_Event from "../FRP.Event/index.js";
 import * as Unsafe_Coerce from "../Unsafe.Coerce/index.js";
 var liftEffect = /* #__PURE__ */ Effect_Class.liftEffect(Effect_Aff.monadEffectAff);
 var bind = /* #__PURE__ */ Control_Bind.bind(Effect_Aff.bindAff);
@@ -22,8 +24,8 @@ var dispose = $foreign.disposeImpl;
 var connectPair = $foreign.connectPairImpl;
 var connect = $foreign.connectImpl;
 var withSession = function (url) {
-    return Effect_Aff.bracket(liftEffect(connect(url)))(function ($5) {
-        return liftEffect(dispose($5));
+    return Effect_Aff.bracket(liftEffect(connect(url)))(function ($11) {
+        return liftEffect(dispose($11));
     });
 };
 var callWithCallback = function (conn) {
@@ -32,6 +34,21 @@ var callWithCallback = function (conn) {
             return bind(Control_Promise.toAff($foreign.callWithCallbackImpl(conn, method, callback)))(function () {
                 return pure(Data_Unit.unit);
             });
+        };
+    };
+};
+var subscribe = function (method) {
+    return function (conn) {
+        return function __do() {
+            var v = FRP_Event.create();
+            var cb = function ($12) {
+                return v.push($12);
+            };
+            var fiber = Effect_Aff.launchAff(callWithCallback(conn)(method)(cb))();
+            return {
+                event: v.event,
+                unsubscribe: Effect_Aff.launchAff_(Effect_Aff.killFiber(Effect_Exception.error("unsubscribed"))(fiber))
+            };
         };
     };
 };
@@ -75,6 +92,7 @@ export {
     call1,
     call2,
     callWithCallback,
+    subscribe,
     getStats,
     drain
 };
