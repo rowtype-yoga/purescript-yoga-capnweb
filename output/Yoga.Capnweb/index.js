@@ -14,53 +14,58 @@ var pure = /* #__PURE__ */ Control_Applicative.pure(Effect_Aff.applicativeAff);
 var map = /* #__PURE__ */ Data_Functor.map(Effect_Aff.functorAff);
 var getStats = $foreign.getStatsImpl;
 var dup = $foreign.dupImpl;
+var drain = function (conn) {
+    return Control_Promise.toAff($foreign.drainImpl(conn));
+};
 var disposeStub = $foreign.disposeStubImpl;
 var dispose = $foreign.disposeImpl;
+var connectPair = $foreign.connectPairImpl;
 var connect = $foreign.connectImpl;
 var withSession = function (url) {
     return Effect_Aff.bracket(liftEffect(connect(url)))(function ($5) {
         return liftEffect(dispose($5));
     });
 };
-var callWithCallback = function (session) {
+var callWithCallback = function (conn) {
     return function (method) {
         return function (callback) {
-            return bind(Control_Promise.toAff($foreign.callWithCallbackImpl(session, method, callback)))(function () {
+            return bind(Control_Promise.toAff($foreign.callWithCallbackImpl(conn, method, callback)))(function () {
                 return pure(Data_Unit.unit);
             });
         };
     };
 };
-var call2 = function (session) {
+var call2 = function (conn) {
     return function (method) {
         return function (a) {
             return function (b) {
-                return map(Unsafe_Coerce.unsafeCoerce)(Control_Promise.toAff($foreign.call2Impl(session, method, a, b)));
+                return map(Unsafe_Coerce.unsafeCoerce)(Control_Promise.toAff($foreign.call2Impl(conn, method, a, b)));
             };
         };
     };
 };
-var call1 = function (session) {
+var call1 = function (conn) {
     return function (method) {
         return function (a) {
-            return map(Unsafe_Coerce.unsafeCoerce)(Control_Promise.toAff($foreign.call1Impl(session, method, a)));
+            return map(Unsafe_Coerce.unsafeCoerce)(Control_Promise.toAff($foreign.call1Impl(conn, method, a)));
         };
     };
 };
-var call0 = function (session) {
+var call0 = function (conn) {
     return function (method) {
-        return map(Unsafe_Coerce.unsafeCoerce)(Control_Promise.toAff($foreign.call0Impl(session, method)));
+        return map(Unsafe_Coerce.unsafeCoerce)(Control_Promise.toAff($foreign.call0Impl(conn, method)));
     };
 };
-var call = function (session) {
+var call = function (conn) {
     return function (method) {
         return function (args) {
-            return Control_Promise.toAff($foreign.callImpl(session, method, args));
+            return Control_Promise.toAff($foreign.callImpl(conn, method, args));
         };
     };
 };
 export {
     connect,
+    connectPair,
     dispose,
     dup,
     disposeStub,
@@ -70,6 +75,7 @@ export {
     call1,
     call2,
     callWithCallback,
-    getStats
+    getStats,
+    drain
 };
 //# sourceMappingURL=index.js.map

@@ -25,3 +25,8 @@ package:
     location:
       githubOwner: rowtype-yoga
       githubRepo: purescript-yoga-capnweb
+  test:
+    main: Test.Main
+    dependencies:
+      - spec
+      - spec-discovery
