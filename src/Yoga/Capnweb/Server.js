@@ -8,6 +8,15 @@ export const mkRpcTargetImpl = (record) => () => {
   return target;
 };
 
+export const mkDisposableRpcTargetImpl = (record, onDispose) => () => {
+  const target = new RpcTargetClass();
+  for (const [key, val] of Object.entries(record)) {
+    target[key] = val;
+  }
+  target[Symbol.dispose] = () => onDispose();
+  return target;
+};
+
 export const handleWebSocketImpl = (ws, target) => () => {
   newWebSocketRpcSession(ws, target);
 };

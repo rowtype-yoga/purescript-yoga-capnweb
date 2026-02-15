@@ -3,6 +3,11 @@ import * as $foreign from "./foreign.js";
 var mkRpcTarget = function (record) {
     return $foreign.mkRpcTargetImpl(record);
 };
+var mkDisposableRpcTarget = function (record) {
+    return function (onDispose) {
+        return $foreign.mkDisposableRpcTargetImpl(record, onDispose);
+    };
+};
 var handleWebSocket = function (ws) {
     return function (target) {
         return $foreign.handleWebSocketImpl(ws, target);
@@ -10,6 +15,7 @@ var handleWebSocket = function (ws) {
 };
 export {
     mkRpcTarget,
+    mkDisposableRpcTarget,
     handleWebSocket
 };
 //# sourceMappingURL=index.js.map
