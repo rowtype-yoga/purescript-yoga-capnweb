@@ -11,6 +11,7 @@ import Data.Function.Uncurried (Fn2, runFn2)
 import Effect (Effect)
 import Foreign (Foreign)
 import Unsafe.Coerce (unsafeCoerce)
+import Yoga.Capnweb.Bun (BunWsBridge)
 
 foreign import data RpcTarget :: Type
 
@@ -25,7 +26,7 @@ mkDisposableRpcTarget :: forall r. Record r -> Effect Unit -> Effect RpcTarget
 mkDisposableRpcTarget record onDispose =
   runFn2 mkDisposableRpcTargetImpl (unsafeCoerce record) onDispose
 
-foreign import handleWebSocketImpl :: Fn2 Foreign RpcTarget (Effect Unit)
+foreign import handleWebSocketImpl :: Fn2 BunWsBridge RpcTarget (Effect Unit)
 
-handleWebSocket :: Foreign -> RpcTarget -> Effect Unit
+handleWebSocket :: BunWsBridge -> RpcTarget -> Effect Unit
 handleWebSocket ws target = runFn2 handleWebSocketImpl ws target
