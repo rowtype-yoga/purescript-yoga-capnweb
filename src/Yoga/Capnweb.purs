@@ -26,6 +26,7 @@ import Data.Function.Uncurried (Fn2, Fn3, Fn4, runFn2, runFn3, runFn4)
 import Effect (Effect)
 import Effect.Aff (Aff, bracket, killFiber)
 import Effect.Aff as Aff
+import Control.Monad.ST.Global (toEffect)
 import Effect.Class (liftEffect)
 import Effect.Exception (error)
 import Foreign (Foreign)
@@ -110,7 +111,7 @@ type Subscription a = { event :: Event a, unsubscribe :: Effect Unit }
 
 subscribe :: forall a. String -> RpcConnection -> Effect (Subscription a)
 subscribe method conn = do
-  { event, push } <- Event.create
+  { event, push } <- Event.create # toEffect
   let cb = push <<< unsafeCoerce
   fiber <- Aff.launchAff $ callWithCallback conn method cb
   pure { event, unsubscribe: Aff.launchAff_ $ killFiber (error "unsubscribed") fiber }
