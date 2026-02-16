@@ -1,13 +1,14 @@
 import { RpcTarget as RpcTargetClass, newWebSocketRpcSession } from "capnweb";
 
 function makeTarget(record) {
-  const proto = Object.create(RpcTargetClass.prototype);
-  for (const [key, val] of Object.entries(record)) {
-    proto[key] = val;
+  class Target extends RpcTargetClass {
+    constructor() {
+      super();
+    }
   }
-  function Target() { RpcTargetClass.call(this); }
-  Target.prototype = proto;
-  Target.prototype.constructor = Target;
+  for (const [key, val] of Object.entries(record)) {
+    Target.prototype[key] = val;
+  }
   return new Target();
 }
 
