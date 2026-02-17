@@ -6,7 +6,7 @@
         "core": {
           "dependencies": [
             {
-              "aff": ">=8.0.0 <9.0.0"
+              "aff": ">=7.1.0 <9.0.0"
             },
             {
               "aff-promise": ">=4.0.0 <5.0.0"
@@ -15,7 +15,7 @@
               "effect": ">=4.0.0 <5.0.0"
             },
             {
-              "exceptions": ">=6.1.0 <7.0.0"
+              "exceptions": ">=6.0.0 <7.0.0"
             },
             {
               "foreign": ">=7.0.0 <8.0.0"
@@ -24,13 +24,13 @@
               "functions": ">=6.0.0 <7.0.0"
             },
             {
-              "hyrule": ">=2.4.0 <3.0.0"
+              "hyrule": ">=2.3.8 <3.0.0"
             },
             {
-              "prelude": ">=6.0.2 <7.0.0"
+              "prelude": ">=6.0.1 <7.0.0"
             },
             {
-              "st": ">=6.2.0 <7.0.0"
+              "st": ">=6.0.0 <7.0.0"
             },
             {
               "unsafe-coerce": ">=6.0.0 <7.0.0"
@@ -45,13 +45,15 @@
         }
       }
     },
-    "extra_packages": {}
+    "extra_packages": {
+      "aff": "7.1.0"
+    }
   },
   "packages": {
     "aff": {
       "type": "registry",
-      "version": "8.0.0",
-      "integrity": "sha256-9BRIrSdRoYybfiUmBqgKJ66cPqxYHb277bVWQMn/9sg=",
+      "version": "7.1.0",
+      "integrity": "sha256-/nOpDQVnKIoP1pQ1ZZBYpadK0TuMlG4WwufGzJpsfD0=",
       "dependencies": [
         "control",
         "datetime",
@@ -1003,8 +1005,8 @@
     },
     "spec-discovery": {
       "type": "registry",
-      "version": "8.4.1",
-      "integrity": "sha256-guvY+NtSOBQmM+HqNJ7woX6taN8hS1wEz7JDmdKF11E=",
+      "version": "8.4.0",
+      "integrity": "sha256-aFp8bllT/wrxQu8hMlDchQQY08dQAz+Xdq2hZi5z3yY=",
       "dependencies": [
         "aff",
         "effect",
@@ -1016,8 +1018,8 @@
     },
     "spec-node": {
       "type": "registry",
-      "version": "0.0.2",
-      "integrity": "sha256-HDW02z3Mj+daux0j9487ApDBX32/gX0od6YR4zvDRZI=",
+      "version": "0.0.3",
+      "integrity": "sha256-8/9+g0obbamV0YtqzmttbWs8HaWF7CEeW+eDtqzuAAo=",
       "dependencies": [
         "aff",
         "argonaut-codecs",
