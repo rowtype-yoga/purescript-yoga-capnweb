@@ -1,10 +1,13 @@
+-- | Capnweb RPC client bindings
 module Yoga.Capnweb
   ( RpcConnection
   , RpcStub
   , Subscription
+  , CallbackHandle
   , connect
   , connectPair
   , dispose
+  , disposeGracefully
   , dup
   , disposeStub
   , withSession
@@ -13,6 +16,9 @@ module Yoga.Capnweb
   , call1
   , call2
   , callWithCallback
+  , callWithCancellableCallback
+  , cancelCallback
+  , awaitCallback
   , subscribe
   , SessionStats
   , getStats
@@ -56,6 +62,11 @@ foreign import disposeImpl :: RpcConnection -> Effect Unit
 dispose :: RpcConnection -> Effect Unit
 dispose = disposeImpl
 
+disposeGracefully :: RpcConnection -> Aff Unit
+disposeGracefully conn = do
+  drain conn
+  dispose conn # liftEffect
+
 withSession :: forall a. String -> (RpcConnection -> Aff a) -> Aff a
 withSession url = bracket (liftEffect (connect url)) (liftEffect <<< dispose)
 
@@ -97,13 +108,29 @@ call2 conn method a b =
 
 -- Callback passing (for server-to-client push)
 
-foreign import callWithCallbackImpl :: Fn3 RpcConnection String Foreign (Promise Foreign)
+foreign import data CallbackHandle :: Type
+
+foreign import callWithCallbackImpl :: Fn3 RpcConnection String Foreign CallbackHandle
+
+foreign import cancelCallbackImpl :: CallbackHandle -> Effect Unit
+
+foreign import awaitCallbackImpl :: CallbackHandle -> Promise Unit
+
+callWithCancellableCallback :: forall a. RpcConnection -> String -> (a -> Effect Unit) -> Effect CallbackHandle
+callWithCancellableCallback conn method callback = do
+  let jsCb = unsafeCoerce callback
+  pure $ runFn3 callWithCallbackImpl conn method jsCb
+
+cancelCallback :: CallbackHandle -> Effect Unit
+cancelCallback = cancelCallbackImpl
+
+awaitCallback :: CallbackHandle -> Aff Unit
+awaitCallback handle = awaitCallbackImpl handle # toAff # void
 
 callWithCallback :: forall a. RpcConnection -> String -> (a -> Effect Unit) -> Aff Unit
 callWithCallback conn method callback = do
-  let jsCb = unsafeCoerce callback
-  _ <- runFn3 callWithCallbackImpl conn method jsCb # toAff
-  pure unit
+  handle <- liftEffect $ callWithCancellableCallback conn method callback
+  awaitCallback handle
 
 -- Subscriptions (push-based via Event)
 

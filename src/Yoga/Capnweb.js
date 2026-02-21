@@ -1,13 +1,53 @@
-import { RpcSession as RpcSessionClass, newWebSocketRpcSession } from "capnweb";
+import { RpcSession as RpcSessionClass } from "capnweb";
 
 const toPromise = (rpcPromise) => new Promise((resolve, reject) => {
   rpcPromise.then(resolve, reject);
 });
 
-class Connection {
-  constructor(session, stub) {
-    this.session = session;
-    this.stub = stub;
+class WebSocketTransport {
+  #ws; #sendQueue; #receiveQueue = []; #resolver = null; #rejecter = null; #error = null;
+  constructor(ws) {
+    this.#ws = ws;
+    if (ws.readyState === WebSocket.CONNECTING) {
+      this.#sendQueue = [];
+      ws.addEventListener("open", () => {
+        for (const msg of this.#sendQueue) ws.send(msg);
+        this.#sendQueue = null;
+      });
+    }
+    ws.addEventListener("message", (e) => {
+      if (this.#error) return;
+      if (typeof e.data !== "string") { this.#receivedError(new TypeError("Non-string message")); return; }
+      if (this.#resolver) { const r = this.#resolver; this.#resolver = null; this.#rejecter = null; r(e.data); }
+      else this.#receiveQueue.push(e.data);
+    });
+    ws.addEventListener("close", (e) => this.#receivedError(new Error(`Peer closed WebSocket: ${e.code}`)));
+    ws.addEventListener("error", () => this.#receivedError(new Error("WebSocket connection failed")));
+  }
+  send(msg) {
+    if (this.#sendQueue) this.#sendQueue.push(msg);
+    else this.#ws.send(msg);
+    return Promise.resolve();
+  }
+  receive() {
+    if (this.#receiveQueue.length > 0) return Promise.resolve(this.#receiveQueue.shift());
+    if (this.#error) return Promise.reject(this.#error);
+    return new Promise((resolve, reject) => { this.#resolver = resolve; this.#rejecter = reject; });
+  }
+  abort() {
+    if (this.#ws.readyState === WebSocket.OPEN || this.#ws.readyState === WebSocket.CONNECTING) {
+      this.#ws.close(3000, "abort");
+    }
+  }
+  close() {
+    if (this.#ws.readyState === WebSocket.OPEN || this.#ws.readyState === WebSocket.CONNECTING) {
+      this.#ws.close();
+    }
+  }
+  #receivedError(err) {
+    if (this.#error) return;
+    this.#error = err;
+    if (this.#rejecter) { const r = this.#rejecter; this.#resolver = null; this.#rejecter = null; r(err); }
   }
 }
 
@@ -26,12 +66,17 @@ class MessagePortTransport {
     if (this.#queue.length > 0) return Promise.resolve(this.#queue.shift());
     return new Promise(r => { this.#waiting = r; });
   }
+  abort() { this.#port.close(); }
   close() { this.#port.close(); }
 }
 
 export const connectImpl = (url) => () => {
-  const stub = newWebSocketRpcSession(url);
-  return new Connection(null, stub);
+  const ws = new WebSocket(url);
+  const transport = new WebSocketTransport(ws);
+  const session = new RpcSessionClass(transport);
+  const stub = session.getRemoteMain();
+  session.drain().catch(() => {});
+  return { stub, close: () => transport.close(), session };
 };
 
 export const connectPairImpl = (localMain) => () => {
@@ -41,12 +86,16 @@ export const connectPairImpl = (localMain) => () => {
   const clientTransport = new MessagePortTransport(port2);
   const clientSession = new RpcSessionClass(clientTransport);
   const stub = clientSession.getRemoteMain();
-  return new Connection(clientSession, stub);
+  serverSession.drain().catch(() => {});
+  clientSession.drain().catch(() => {});
+  return {
+    stub,
+    close: () => { serverTransport.close(); clientTransport.close(); },
+    session: clientSession,
+  };
 };
 
-export const disposeImpl = (conn) => () => {
-  if (conn.stub[Symbol.dispose]) conn.stub[Symbol.dispose]();
-};
+export const disposeImpl = (conn) => () => conn.close();
 
 export const dupImpl = (stub) => () => stub.dup();
 
@@ -60,9 +109,20 @@ export const call1Impl = (conn, method, a) => toPromise(conn.stub[method](a));
 export const call2Impl = (conn, method, a, b) => toPromise(conn.stub[method](a, b));
 
 export const callWithCallbackImpl = (conn, method, callback) => {
-  const wrappedCb = (value) => callback(value)();
-  return toPromise(conn.stub[method](wrappedCb));
+  const wrappedCb = (value) => {
+    if (wrappedCb._cancelled) return Promise.reject(new Error("cancelled"));
+    return callback(value)();
+  };
+  wrappedCb._cancelled = false;
+  const promise = toPromise(conn.stub[method](wrappedCb));
+  return { promise, wrappedCb };
 };
+
+export const cancelCallbackImpl = (handle) => () => {
+  handle.wrappedCb._cancelled = true;
+};
+
+export const awaitCallbackImpl = (handle) => handle.promise;
 
 export const getStatsImpl = (conn) => () => conn.session.getStats();
 
