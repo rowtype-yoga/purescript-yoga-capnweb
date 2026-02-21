@@ -26,7 +26,7 @@ class WebSocketTransport {
   }
   send(msg) {
     if (this.#sendQueue) this.#sendQueue.push(msg);
-    else this.#ws.send(msg);
+    else if (this.#ws.readyState === WebSocket.OPEN) this.#ws.send(msg);
     return Promise.resolve();
   }
   receive() {
@@ -35,11 +35,13 @@ class WebSocketTransport {
     return new Promise((resolve, reject) => { this.#resolver = resolve; this.#rejecter = reject; });
   }
   abort() {
+    this.#error = this.#error || new Error("aborted");
     if (this.#ws.readyState === WebSocket.OPEN || this.#ws.readyState === WebSocket.CONNECTING) {
       this.#ws.close(3000, "abort");
     }
   }
   close() {
+    this.#error = this.#error || new Error("closed");
     if (this.#ws.readyState === WebSocket.OPEN || this.#ws.readyState === WebSocket.CONNECTING) {
       this.#ws.close();
     }
